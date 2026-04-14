@@ -1,0 +1,80 @@
+ticker,name,sector,is_lq45
+AALI,Astra Agro Lestari Tbk,Consumer Non-Cyclicals,FALSE
+ACES,Ace Hardware Indonesia Tbk,Consumer Cyclicals,FALSE
+ADHI,Adhi Karya (Persero) Tbk,Properties & Real Estate,FALSE
+ADMR,Adaro Minerals Indonesia Tbk,Energy,FALSE
+ADRO,Adaro Energy Indonesia Tbk,Energy,TRUE
+AGRO,Bank Rakyat Indonesia Agroniaga Tbk,Financials,FALSE
+AKRA,AKR Corporindo Tbk,Industrials,FALSE
+AMMN,Amman Mineral Internasional Tbk,Basic Materials,TRUE
+AMRT,Sumber Alfaria Trijaya Tbk,Consumer Cyclicals,TRUE
+ANTM,Aneka Tambang Tbk,Basic Materials,TRUE
+ARNA,Arwana Citramulia Tbk,Basic Materials,FALSE
+ASII,Astra International Tbk,Industrials,TRUE
+BBCA,Bank Central Asia Tbk,Financials,TRUE
+BBNI,Bank Negara Indonesia (Persero) Tbk,Financials,TRUE
+BBRI,Bank Rakyat Indonesia (Persero) Tbk,Financials,TRUE
+BBTN,Bank Tabungan Negara (Persero) Tbk,Financials,TRUE
+BDMN,Bank Danamon Indonesia Tbk,Financials,FALSE
+BFIN,BFI Finance Indonesia Tbk,Financials,FALSE
+BJBR,Bank Pembangunan Daerah Jawa Barat dan Banten Tbk,Financials,FALSE
+BMRI,Bank Mandiri (Persero) Tbk,Financials,TRUE
+BMTR,Global Mediacom Tbk,Communication & Media,FALSE
+BREN,Barito Renewables Energy Tbk,Energy,TRUE
+BRPT,Barito Pacific Tbk,Basic Materials,FALSE
+BSDE,Bumi Serpong Damai Tbk,Properties & Real Estate,FALSE
+CPIN,Charoen Pokphand Indonesia Tbk,Consumer Non-Cyclicals,FALSE
+DEWA,Darma Henwa Tbk,Energy,FALSE
+DMAS,Puradelta Lestari Tbk,Properties & Real Estate,FALSE
+EMTK,Elang Mahkota Teknologi Tbk,Communication & Media,FALSE
+ERAA,Erajaya Swasembada Tbk,Consumer Cyclicals,FALSE
+ESSA,Essa Industries Indonesia Tbk,Basic Materials,FALSE
+EXCL,XL Axiata Tbk,Telecommunication,FALSE
+FILM,MD Pictures Tbk,Communication & Media,FALSE
+GGRM,Gudang Garam Tbk,Consumer Non-Cyclicals,FALSE
+GOTO,GoTo Gojek Tokopedia Tbk,Technology,TRUE
+HEAL,Medikaloka Hermina Tbk,Healthcare,FALSE
+HRUM,Harum Energy Tbk,Energy,FALSE
+ICBP,Indofood CBP Sukses Makmur Tbk,Consumer Non-Cyclicals,TRUE
+INCO,Vale Indonesia Tbk,Basic Materials,FALSE
+INDF,Indofood Sukses Makmur Tbk,Consumer Non-Cyclicals,TRUE
+INDY,Indika Energy Tbk,Energy,FALSE
+INKP,Indah Kiat Pulp & Paper Tbk,Basic Materials,FALSE
+ISAT,Indosat Tbk,Telecommunication,TRUE
+JPFA,Japfa Comfeed Indonesia Tbk,Consumer Non-Cyclicals,FALSE
+KAEF,Kimia Farma Tbk,Healthcare,FALSE
+KLBF,Kalbe Farma Tbk,Healthcare,TRUE
+LPPF,Matahari Department Store Tbk,Consumer Cyclicals,FALSE
+LSIP,PP London Sumatra Indonesia Tbk,Consumer Non-Cyclicals,FALSE
+MAPA,Map Aktif Adiperkasa Tbk,Consumer Cyclicals,FALSE
+MAPI,Mitra Adiperkasa Tbk,Consumer Cyclicals,FALSE
+MBMA,MBM Resources Tbk,Basic Materials,FALSE
+MDKA,Merdeka Copper Gold Tbk,Basic Materials,TRUE
+MEDC,Medco Energi Internasional Tbk,Energy,FALSE
+MIKA,Mitra Keluarga Karyasehat Tbk,Healthcare,FALSE
+MLPT,Multipolar Technology Tbk,Technology,FALSE
+MNCN,Media Nusantara Citra Tbk,Communication & Media,FALSE
+MTEL,Dayamitra Telekomunikasi Tbk,Telecommunication,TRUE
+NCKL,Trimegah Bangun Persada Tbk,Basic Materials,TRUE
+NISP,Bank OCBC NISP Tbk,Financials,FALSE
+PGEO,Pertamina Geothermal Energy Tbk,Energy,FALSE
+PGAS,Perusahaan Gas Negara Tbk,Energy,TRUE
+PTBA,Bukit Asam Tbk,Energy,TRUE
+PTPP,PP (Persero) Tbk,Properties & Real Estate,FALSE
+PWON,Pakuwon Jati Tbk,Properties & Real Estate,FALSE
+SMGR,Semen Indonesia (Persero) Tbk,Basic Materials,TRUE
+SMRA,Summarecon Agung Tbk,Properties & Real Estate,FALSE
+SRTG,Saratoga Investama Sedaya Tbk,Financials,FALSE
+SSIA,Surya Semesta Internusa Tbk,Properties & Real Estate,FALSE
+SSMS,Sawit Sumbermas Sarana Tbk,Consumer Non-Cyclicals,FALSE
+TAPG,Triputra Agro Persada Tbk,Consumer Non-Cyclicals,FALSE
+TBIG,Tower Bersama Infrastructure Tbk,Telecommunication,FALSE
+TINS,Timah Tbk,Basic Materials,FALSE
+TLKM,Telkom Indonesia (Persero) Tbk,Telecommunication,TRUE
+TOWR,Sarana Menara Nusantara Tbk,Telecommunication,FALSE
+TPIA,Chandra Asri Petrochemical Tbk,Basic Materials,TRUE
+UNTR,United Tractors Tbk,Industrials,TRUE
+UNVR,Unilever Indonesia Tbk,Consumer Non-Cyclicals,TRUE
+WIKA,Wijaya Karya (Persero) Tbk,Properties & Real Estate,FALSE
+WSKT,Waskita Karya (Persero) Tbk,Properties & Real Estate,FALSE
+WTON,Wijaya Karya Beton Tbk,Basic Materials,FALSE

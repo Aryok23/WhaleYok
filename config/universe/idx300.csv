@@ -1,0 +1,112 @@
+ticker,name,sector,is_idx80
+AALI,Astra Agro Lestari Tbk,Consumer Non-Cyclicals,TRUE
+ACES,Ace Hardware Indonesia Tbk,Consumer Cyclicals,TRUE
+ADHI,Adhi Karya (Persero) Tbk,Properties & Real Estate,TRUE
+ADMG,Polychem Indonesia Tbk,Basic Materials,FALSE
+ADMR,Adaro Minerals Indonesia Tbk,Energy,TRUE
+ADRO,Adaro Energy Indonesia Tbk,Energy,TRUE
+AGII,Aneka Gas Industri Tbk,Basic Materials,FALSE
+AGRO,Bank Rakyat Indonesia Agroniaga Tbk,Financials,TRUE
+AKRA,AKR Corporindo Tbk,Industrials,TRUE
+AMFG,Asahimas Flat Glass Tbk,Basic Materials,FALSE
+AMMN,Amman Mineral Internasional Tbk,Basic Materials,TRUE
+AMRT,Sumber Alfaria Trijaya Tbk,Consumer Cyclicals,TRUE
+ANTM,Aneka Tambang Tbk,Basic Materials,TRUE
+APLN,Agung Podomoro Land Tbk,Properties & Real Estate,FALSE
+ARNA,Arwana Citramulia Tbk,Basic Materials,TRUE
+ASII,Astra International Tbk,Industrials,TRUE
+BBCA,Bank Central Asia Tbk,Financials,TRUE
+BBKP,Bank KB Bukopin Tbk,Financials,FALSE
+BBNI,Bank Negara Indonesia (Persero) Tbk,Financials,TRUE
+BBRI,Bank Rakyat Indonesia (Persero) Tbk,Financials,TRUE
+BBTN,Bank Tabungan Negara (Persero) Tbk,Financials,TRUE
+BCAP,MNC Kapital Indonesia Tbk,Financials,FALSE
+BDMN,Bank Danamon Indonesia Tbk,Financials,TRUE
+BEST,Bekasi Fajar Industrial Estate Tbk,Properties & Real Estate,FALSE
+BFIN,BFI Finance Indonesia Tbk,Financials,TRUE
+BJBR,Bank Pembangunan Daerah Jawa Barat dan Banten Tbk,Financials,TRUE
+BJTM,Bank Pembangunan Daerah Jawa Timur Tbk,Financials,FALSE
+BKSL,Sentul City Tbk,Properties & Real Estate,FALSE
+BMRI,Bank Mandiri (Persero) Tbk,Financials,TRUE
+BMTR,Global Mediacom Tbk,Communication & Media,TRUE
+BREN,Barito Renewables Energy Tbk,Energy,TRUE
+BRPT,Barito Pacific Tbk,Basic Materials,TRUE
+BSDE,Bumi Serpong Damai Tbk,Properties & Real Estate,TRUE
+BUKA,Bukalapak.com Tbk,Technology,FALSE
+CLEO,Sariguna Primatirta Tbk,Consumer Non-Cyclicals,FALSE
+CMRY,Cisarua Mountain Dairy Tbk,Consumer Non-Cyclicals,FALSE
+CPIN,Charoen Pokphand Indonesia Tbk,Consumer Non-Cyclicals,TRUE
+CTRA,Ciputra Development Tbk,Properties & Real Estate,FALSE
+DEWA,Darma Henwa Tbk,Energy,TRUE
+DMAS,Puradelta Lestari Tbk,Properties & Real Estate,TRUE
+DOID,Delta Dunia Makmur Tbk,Energy,FALSE
+DSNG,Dharma Satya Nusantara Tbk,Consumer Non-Cyclicals,FALSE
+EKAD,Ekadharma International Tbk,Basic Materials,FALSE
+ELSA,Elnusa Tbk,Energy,FALSE
+EMTK,Elang Mahkota Teknologi Tbk,Communication & Media,TRUE
+ERAA,Erajaya Swasembada Tbk,Consumer Cyclicals,TRUE
+ESSA,Essa Industries Indonesia Tbk,Basic Materials,TRUE
+EXCL,XL Axiata Tbk,Telecommunication,TRUE
+FILM,MD Pictures Tbk,Communication & Media,TRUE
+FREN,Smartfren Telecom Tbk,Telecommunication,FALSE
+GGRM,Gudang Garam Tbk,Consumer Non-Cyclicals,TRUE
+GJTL,Gajah Tunggal Tbk,Consumer Cyclicals,FALSE
+GOTO,GoTo Gojek Tokopedia Tbk,Technology,TRUE
+HEAL,Medikaloka Hermina Tbk,Healthcare,TRUE
+HMSP,HM Sampoerna Tbk,Consumer Non-Cyclicals,FALSE
+HRTA,Hartadinata Abadi Tbk,Consumer Cyclicals,FALSE
+HRUM,Harum Energy Tbk,Energy,TRUE
+ICBP,Indofood CBP Sukses Makmur Tbk,Consumer Non-Cyclicals,TRUE
+INCO,Vale Indonesia Tbk,Basic Materials,TRUE
+INDF,Indofood Sukses Makmur Tbk,Consumer Non-Cyclicals,TRUE
+INDY,Indika Energy Tbk,Energy,TRUE
+INKP,Indah Kiat Pulp & Paper Tbk,Basic Materials,TRUE
+INTA,Intraco Penta Tbk,Industrials,FALSE
+ISAT,Indosat Tbk,Telecommunication,TRUE
+ISSP,Steel Technologies Indonesia Tbk,Basic Materials,FALSE
+JPFA,Japfa Comfeed Indonesia Tbk,Consumer Non-Cyclicals,TRUE
+JSMR,Jasa Marga (Persero) Tbk,Industrials,FALSE
+KAEF,Kimia Farma Tbk,Healthcare,TRUE
+KIJA,Kawasan Industri Jababeka Tbk,Properties & Real Estate,FALSE
+KLBF,Kalbe Farma Tbk,Healthcare,TRUE
+LINK,Link Net Tbk,Technology,FALSE
+LPPF,Matahari Department Store Tbk,Consumer Cyclicals,TRUE
+LSIP,PP London Sumatra Indonesia Tbk,Consumer Non-Cyclicals,TRUE
+MAPA,Map Aktif Adiperkasa Tbk,Consumer Cyclicals,TRUE
+MAPI,Mitra Adiperkasa Tbk,Consumer Cyclicals,TRUE
+MBMA,MBM Resources Tbk,Basic Materials,TRUE
+MDKA,Merdeka Copper Gold Tbk,Basic Materials,TRUE
+MEDC,Medco Energi Internasional Tbk,Energy,TRUE
+MIKA,Mitra Keluarga Karyasehat Tbk,Healthcare,TRUE
+MLPT,Multipolar Technology Tbk,Technology,TRUE
+MNCN,Media Nusantara Citra Tbk,Communication & Media,TRUE
+MTEL,Dayamitra Telekomunikasi Tbk,Telecommunication,TRUE
+NCKL,Trimegah Bangun Persada Tbk,Basic Materials,TRUE
+NISP,Bank OCBC NISP Tbk,Financials,TRUE
+PGEO,Pertamina Geothermal Energy Tbk,Energy,TRUE
+PGAS,Perusahaan Gas Negara Tbk,Energy,TRUE
+PNLF,Panin Financial Tbk,Financials,FALSE
+PTBA,Bukit Asam Tbk,Energy,TRUE
+PTPP,PP (Persero) Tbk,Properties & Real Estate,TRUE
+PWON,Pakuwon Jati Tbk,Properties & Real Estate,TRUE
+RALS,Ramayana Lestari Sentosa Tbk,Consumer Cyclicals,FALSE
+SCMA,Surya Citra Media Tbk,Communication & Media,FALSE
+SIDO,Industri Jamu dan Farmasi Sido Muncul Tbk,Healthcare,FALSE
+SMGR,Semen Indonesia (Persero) Tbk,Basic Materials,TRUE
+SMRA,Summarecon Agung Tbk,Properties & Real Estate,TRUE
+SRTG,Saratoga Investama Sedaya Tbk,Financials,TRUE
+SSIA,Surya Semesta Internusa Tbk,Properties & Real Estate,TRUE
+SSMS,Sawit Sumbermas Sarana Tbk,Consumer Non-Cyclicals,TRUE
+TAPG,Triputra Agro Persada Tbk,Consumer Non-Cyclicals,TRUE
+TBIG,Tower Bersama Infrastructure Tbk,Telecommunication,TRUE
+TINS,Timah Tbk,Basic Materials,TRUE
+TLKM,Telkom Indonesia (Persero) Tbk,Telecommunication,TRUE
+TOWR,Sarana Menara Nusantara Tbk,Telecommunication,TRUE
+TPIA,Chandra Asri Petrochemical Tbk,Basic Materials,TRUE
+TRIL,Triwira Insanlestari Tbk,Technology,FALSE
+UNTR,United Tractors Tbk,Industrials,TRUE
+UNVR,Unilever Indonesia Tbk,Consumer Non-Cyclicals,TRUE
+WIIM,Wismilak Inti Makmur Tbk,Consumer Non-Cyclicals,FALSE
+WIKA,Wijaya Karya (Persero) Tbk,Properties & Real Estate,TRUE
+WSKT,Waskita Karya (Persero) Tbk,Properties & Real Estate,TRUE
+WTON,Wijaya Karya Beton Tbk,Basic Materials,TRUE
