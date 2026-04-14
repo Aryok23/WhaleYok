@@ -125,10 +125,16 @@ def _format_signal_entry(rank: int, signal: dict) -> str:
     # Price
     price_ev = evidence.get("price", {})
     price_change = price_ev.get("change_1d")
-    price_str = ""
-    if price_change is not None:
-        sign = "+" if price_change >= 0 else ""
-        price_str = f"  Harga: {sign}{price_change * 100:.1f}%"
+    close_price = price_ev.get("close")
+    if close_price:
+        close_fmt = f"Rp {int(close_price):,}".replace(",", ".")
+        if price_change is not None:
+            sign = "+" if price_change >= 0 else ""
+            price_str = f"  💰 Harga : {close_fmt} ({sign}{price_change * 100:.1f}%)"
+        else:
+            price_str = f"  💰 Harga : {close_fmt}"
+    else:
+        price_str = ""
 
     # Broker detail
     broker_ev = evidence.get("broker", {})
