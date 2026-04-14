@@ -30,6 +30,9 @@ class Settings:
     dry_run: bool = False
     debug: bool = False
 
+    # Stockbit
+    stockbit_token: str = field(default_factory=lambda: os.environ.get("STOCKBIT_TOKEN", ""))
+
     # Scraping
     request_delay_sec: float = 1.0          # jeda minimum antar request
     max_retries: int = 3                    # max retry per request

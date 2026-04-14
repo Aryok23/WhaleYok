@@ -132,6 +132,38 @@ def check_emiten_count() -> tuple[str, str]:
         return STATUS_FAIL, f"Error: {str(exc)[:200]}"
 
 
+def check_stockbit_token() -> tuple[str, str]:
+    """Cek apakah Stockbit token masih valid.
+
+    Jika expired, kirim Telegram alert otomatis.
+
+    Returns:
+        Tuple (status, detail)
+    """
+    token = settings.stockbit_token
+    if not token:
+        return STATUS_WARN, "STOCKBIT_TOKEN tidak dikonfigurasi di .env"
+
+    try:
+        from data.scrapers.broksum import check_stockbit_token as _check_token
+        valid = _check_token(token)
+        if valid:
+            preview = token[:30] + "..."
+            return STATUS_OK, f"Token valid ({preview})"
+        else:
+            # Kirim Telegram alert
+            try:
+                from output.telegram_bot import send_stockbit_token_alert
+                preview = token[7:27] + "..." if len(token) > 27 else token
+                send_stockbit_token_alert(token_preview=preview)
+                alert_sent = " — alert Telegram terkirim"
+            except Exception:
+                alert_sent = " — gagal kirim alert Telegram"
+            return STATUS_FAIL, f"Token expired atau invalid{alert_sent}"
+    except Exception as exc:
+        return STATUS_FAIL, f"Error saat cek token: {str(exc)[:200]}"
+
+
 def check_price_data() -> tuple[str, str]:
     """Cek apakah ada data historis di tabel price_data.
 
@@ -178,6 +210,7 @@ def run_health_check(verbose: bool = False) -> bool:
         ("ENV VARS", check_env_vars),
         ("SUPABASE", check_supabase),
         ("TELEGRAM", check_telegram),
+        ("STOCKBIT TOKEN", check_stockbit_token),
         ("YFINANCE", check_yfinance),
         ("EMITEN COUNT", check_emiten_count),
         ("PRICE DATA", check_price_data),

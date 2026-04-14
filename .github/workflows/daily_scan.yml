@@ -25,12 +25,13 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run health check
+      - name: Run health check (incl. Stockbit token)
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          STOCKBIT_TOKEN: ${{ secrets.STOCKBIT_TOKEN }}
         run: python scripts/health_check.py
 
       - name: Run daily scan
@@ -39,6 +40,7 @@ jobs:
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          STOCKBIT_TOKEN: ${{ secrets.STOCKBIT_TOKEN }}
         run: python main.py --mode eod
 
       - name: Notify on failure

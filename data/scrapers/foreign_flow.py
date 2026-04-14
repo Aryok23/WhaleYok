@@ -1,9 +1,12 @@
 """
-foreign_flow.py — Scraper foreign net buy/sell harian dari IDX.co.id.
+foreign_flow.py — Scraper foreign net buy/sell harian dari Stockbit.
 
-Endpoint IDX:
-  GET https://www.idx.co.id/primary/TradingSummary/GetForeignSummary
-  Params: code={ticker}, start=0, length=10, date={YYYY-MM-DD}
+Sumber utama: Stockbit (exodus.stockbit.com) — data foreign buy/sell per hari.
+  Endpoint: GET /company-price-feed/historical/summary/{ticker}
+  Auth: Bearer token dari STOCKBIT_TOKEN di .env
+  Data: foreign_buy, foreign_sell, net_foreign per hari
+
+IDX.co.id (GetForeignSummary) tidak digunakan — diblokir Cloudflare 403.
 
 Rate limit: 1 detik antar request (wajib).
 Retry: max 3x dengan exponential backoff.
@@ -19,58 +22,76 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-IDX_FOREIGN_URL = "https://www.idx.co.id/primary/TradingSummary/GetForeignSummary"
-IDX_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/120.0.0.0 Safari/537.36"
-    ),
-    "Referer": "https://www.idx.co.id/id/data-pasar/ringkasan-perdagangan/ringkasan-asing/",
-    "Accept": "application/json, text/plain, */*",
-    "Accept-Language": "id-ID,id;q=0.9,en;q=0.8",
-    "X-Requested-With": "XMLHttpRequest",
-}
+STOCKBIT_SUMMARY_URL = "https://exodus.stockbit.com/company-price-feed/historical/summary/{ticker}"
 
 MAX_RETRIES = 3
 RETRY_BACKOFF = 2.0
-RATE_LIMIT_SEC = 1.5
+RATE_LIMIT_SEC = 1.0
+
+
+def _stockbit_headers(token: str) -> dict:
+    return {
+        "Authorization": token if token.startswith("Bearer ") else f"Bearer {token}",
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/120.0.0.0 Safari/537.36"
+        ),
+        "Accept": "application/json",
+        "Origin": "https://stockbit.com",
+        "Referer": "https://stockbit.com/",
+    }
 
 
 def scrape_foreign_flow(
     ticker: str,
     target_date: Optional[date] = None,
+    token: str = "",
 ) -> Optional[dict]:
-    """Scrape foreign net buy/sell untuk satu ticker satu hari dari IDX.
+    """Scrape foreign net buy/sell untuk satu ticker satu hari dari Stockbit.
 
     Args:
         ticker: Kode saham IDX (uppercase, tanpa .JK)
         target_date: Tanggal data (default: hari ini)
+        token: Bearer token Stockbit (dari settings.stockbit_token)
 
     Returns:
         Dict berisi data foreign flow, atau None jika gagal.
-        Keys: ticker, date, foreign_buy, foreign_sell, foreign_net,
-              foreign_buy_volume, foreign_sell_volume, foreign_net_volume
+        Keys: ticker, date, foreign_buy, foreign_sell,
+              foreign_buy_volume, foreign_sell_volume, _foreign_net
     """
     if target_date is None:
         target_date = date.today()
 
-    date_str = target_date.strftime("%Y-%m-%d")
+    if not token:
+        from config.settings import settings
+        token = settings.stockbit_token
+
+    date_str = target_date.isoformat()
+    url = STOCKBIT_SUMMARY_URL.format(ticker=ticker)
     params = {
-        "code": ticker,
-        "start": 0,
-        "length": 10,
-        "date": date_str,
+        "period": "HS_PERIOD_DAILY",
+        "start_date": date_str,
+        "end_date": date_str,
+        "limit": 5,
+        "page": 1,
     }
 
     for attempt in range(1, MAX_RETRIES + 1):
         try:
             resp = requests.get(
-                IDX_FOREIGN_URL,
+                url,
                 params=params,
-                headers=IDX_HEADERS,
+                headers=_stockbit_headers(token),
                 timeout=15,
             )
+
+            if resp.status_code == 401:
+                logger.error(
+                    f"scrape_foreign_flow: {ticker} — 401 Unauthorized. "
+                    "Token expired. Update STOCKBIT_TOKEN di .env"
+                )
+                return None
 
             if resp.status_code == 404:
                 logger.warning(f"scrape_foreign_flow: {ticker} {date_str} — 404")
@@ -79,32 +100,39 @@ def scrape_foreign_flow(
             resp.raise_for_status()
             payload = resp.json()
 
-            data = payload.get("data", [])
-            if not data:
-                logger.warning(f"scrape_foreign_flow: {ticker} {date_str} — respons kosong")
+            rows = payload.get("data", {}).get("result", [])
+            if not rows:
+                logger.warning(f"scrape_foreign_flow: {ticker} {date_str} — data kosong")
                 return None
 
-            row = data[0]
+            # Cari row yang sesuai tanggal
+            row = next((r for r in rows if r.get("date") == date_str), None)
+            if not row:
+                logger.warning(
+                    f"scrape_foreign_flow: {ticker} {date_str} — "
+                    f"tanggal tidak ditemukan (rows: {[r.get('date') for r in rows]})"
+                )
+                return None
+
             try:
-                foreign_buy = float(row.get("ForeignBuy", 0) or 0)
-                foreign_sell = float(row.get("ForeignSell", 0) or 0)
-                foreign_buy_vol = float(row.get("ForeignBuyVolume", 0) or 0)
-                foreign_sell_vol = float(row.get("ForeignSellVolume", 0) or 0)
+                foreign_buy = float(row.get("foreign_buy", 0) or 0)
+                foreign_sell = float(row.get("foreign_sell", 0) or 0)
+                net_foreign = float(row.get("net_foreign", 0) or 0)
             except (ValueError, TypeError) as exc:
                 logger.error(f"scrape_foreign_flow: parse error {ticker}: {exc}")
                 return None
 
             result = {
                 "ticker": ticker,
-                "date": target_date.isoformat(),
+                "date": date_str,
                 "foreign_buy": int(foreign_buy),
                 "foreign_sell": int(foreign_sell),
-                # foreign_net adalah GENERATED column — tidak perlu diinsert
-                "foreign_buy_volume": int(foreign_buy_vol),
-                "foreign_sell_volume": int(foreign_sell_vol),
-                # foreign_net_volume adalah GENERATED column — tidak perlu diinsert
-                # simpan net di key terpisah untuk kebutuhan scoring (tidak ditulis ke DB)
-                "_foreign_net": foreign_buy - foreign_sell,
+                # foreign_net adalah GENERATED column di DB — tidak diinsert
+                # volume tidak tersedia dari endpoint ini — set 0
+                "foreign_buy_volume": 0,
+                "foreign_sell_volume": 0,
+                # simpan net untuk scoring (tidak ditulis ke DB)
+                "_foreign_net": net_foreign,
             }
             logger.debug(
                 f"scrape_foreign_flow: {ticker} {date_str} "
@@ -113,7 +141,9 @@ def scrape_foreign_flow(
             return result
 
         except requests.Timeout:
-            logger.warning(f"scrape_foreign_flow: timeout {ticker} attempt {attempt}/{MAX_RETRIES}")
+            logger.warning(
+                f"scrape_foreign_flow: timeout {ticker} attempt {attempt}/{MAX_RETRIES}"
+            )
         except requests.HTTPError as exc:
             logger.warning(f"scrape_foreign_flow: HTTP error {ticker}: {exc}")
         except requests.RequestException as exc:
@@ -123,19 +153,23 @@ def scrape_foreign_flow(
             sleep_time = RETRY_BACKOFF ** attempt
             time.sleep(sleep_time)
 
-    logger.error(f"scrape_foreign_flow: {ticker} {date_str} gagal setelah {MAX_RETRIES} retry")
+    logger.error(
+        f"scrape_foreign_flow: {ticker} {date_str} gagal setelah {MAX_RETRIES} retry"
+    )
     return None
 
 
 def scrape_foreign_flow_bulk(
     tickers: list[str],
     target_date: Optional[date] = None,
+    token: str = "",
 ) -> pd.DataFrame:
-    """Scrape foreign flow untuk banyak ticker sekaligus.
+    """Scrape foreign flow untuk banyak ticker sekaligus via Stockbit.
 
     Args:
         tickers: List kode saham IDX
         target_date: Tanggal data (default: hari ini)
+        token: Bearer token Stockbit
 
     Returns:
         DataFrame dengan kolom foreign flow untuk semua ticker.
@@ -143,12 +177,16 @@ def scrape_foreign_flow_bulk(
     if target_date is None:
         target_date = date.today()
 
+    if not token:
+        from config.settings import settings
+        token = settings.stockbit_token
+
     results = []
     total = len(tickers)
 
     for i, ticker in enumerate(tickers, 1):
         logger.debug(f"scrape_foreign_flow_bulk: [{i}/{total}] {ticker}")
-        row = scrape_foreign_flow(ticker, target_date)
+        row = scrape_foreign_flow(ticker, target_date, token=token)
         if row:
             results.append(row)
         time.sleep(RATE_LIMIT_SEC)

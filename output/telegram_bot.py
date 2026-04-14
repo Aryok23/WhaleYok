@@ -299,6 +299,31 @@ def send_pipeline_failure_alert(error_message: str) -> bool:
     return _send_message(msg)
 
 
+def send_stockbit_token_alert(token_preview: str = "") -> bool:
+    """Kirim alert bahwa Stockbit token expired dan perlu diperbarui.
+
+    Args:
+        token_preview: Potongan awal token lama (untuk identifikasi)
+
+    Returns:
+        True jika berhasil dikirim.
+    """
+    preview = f"\nToken lama: <code>{token_preview}</code>" if token_preview else ""
+    msg = (
+        f"🔑 <b>WhaleDet — STOCKBIT_TOKEN Expired</b>\n\n"
+        f"Token Stockbit tidak valid atau sudah expired.\n"
+        f"Broksum hari ini <b>tidak dapat diambil</b> sampai token diperbarui.{preview}\n\n"
+        f"<b>Cara update:</b>\n"
+        f"1. Buka exodus.stockbit.com di browser\n"
+        f"2. Login, buka DevTools → Network\n"
+        f"3. Klik saham apa saja, cari request ke <code>/broker/distribution</code>\n"
+        f"4. Copy nilai <code>Authorization</code> header\n"
+        f"5. Update <code>STOCKBIT_TOKEN</code> di <code>.env</code>\n\n"
+        f"Waktu: {datetime.now().strftime('%Y-%m-%d %H:%M WIB')}"
+    )
+    return _send_message(msg)
+
+
 def send_test_message() -> bool:
     """Kirim pesan test untuk verifikasi koneksi Telegram.
 

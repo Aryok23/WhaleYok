@@ -27,7 +27,7 @@ from datetime import date, datetime, timedelta
 
 from config.settings import settings, configure_logging
 from data.scrapers.ohlcv import fetch_ohlcv_daily
-from data.scrapers.broksum import scrape_broksum_bulk, compute_broker_net_by_category
+from data.scrapers.broksum import scrape_broksum_stockbit_bulk, compute_broker_net_by_category
 from data.scrapers.foreign_flow import scrape_foreign_flow_bulk, compute_foreign_trend
 from engine.features import compute_features_for_ticker
 from engine.scorer import score_all_emiten
@@ -173,8 +173,8 @@ def run_eod_pipeline(target_date: date, dry_run: bool = False) -> dict:
         logger.info(f"  {len(history_df)} rows historis dimuat")
 
     # ── Step 5: Scrape broker summary ─────────────────────────────────────────
-    logger.info("Step 5: Scrape broker summary dari IDX...")
-    broksum_df = scrape_broksum_bulk(tickers_today, target_date)
+    logger.info("Step 5: Scrape broker summary dari Stockbit...")
+    broksum_df = scrape_broksum_stockbit_bulk(tickers_today, target_date, token=settings.stockbit_token)
     broker_rows_written = write_broker_summary(broksum_df, dry_run=dry_run)
     logger.info(f"  {len(broksum_df)} broker rows diterima, {broker_rows_written} ditulis")
 
@@ -187,8 +187,8 @@ def run_eod_pipeline(target_date: date, dry_run: bool = False) -> dict:
                 broker_map[ticker] = compute_broker_net_by_category(ticker_brok)
 
     # ── Step 6: Scrape foreign flow ────────────────────────────────────────────
-    logger.info("Step 6: Scrape foreign flow dari IDX...")
-    foreign_df = scrape_foreign_flow_bulk(tickers_today, target_date)
+    logger.info("Step 6: Scrape foreign flow dari Stockbit...")
+    foreign_df = scrape_foreign_flow_bulk(tickers_today, target_date, token=settings.stockbit_token)
     foreign_rows_written = write_foreign_flow(foreign_df, dry_run=dry_run)
     logger.info(f"  {len(foreign_df)} foreign rows diterima, {foreign_rows_written} ditulis")
 
@@ -331,6 +331,14 @@ def main() -> None:
                 logger.warning(f"[DRY RUN] Env vars tidak dikonfigurasi: {missing}")
     except ValueError as exc:
         logger.error(f"Konfigurasi tidak valid: {exc}")
+        sys.exit(1)
+
+    # Validasi Stockbit token (wajib untuk broksum + foreign flow)
+    if not settings.stockbit_token:
+        logger.error(
+            "STOCKBIT_TOKEN tidak ditemukan. "
+            "Isi di .env atau GitHub Secrets sebelum menjalankan pipeline."
+        )
         sys.exit(1)
 
     target_date = resolve_date(args.date)
