@@ -6,7 +6,7 @@ Handle error gracefully — jika Telegram down, log warning dan lanjutkan.
 """
 
 import logging
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, timezone
 
 import requests
 
@@ -212,8 +212,9 @@ def _format_eod_message(
     if target_date is None:
         target_date = date.today()
 
+    _wib = datetime.now(timezone.utc) + timedelta(hours=7)
     date_str = target_date.strftime("%d %b %Y")
-    time_str = datetime.now().strftime("%H:%M WIB")
+    time_str = _wib.strftime("%H:%M WIB")
 
     header = (
         f"🐋 <b>WhaleDet IDX — {date_str} {time_str}</b>\n"
@@ -298,7 +299,7 @@ def send_pipeline_failure_alert(error_message: str) -> bool:
     """
     msg = (
         f"⚠️ <b>WhaleDet Pipeline GAGAL</b>\n\n"
-        f"Waktu: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n"
+        f"Waktu: {(datetime.now(timezone.utc) + timedelta(hours=7)).strftime('%Y-%m-%d %H:%M')}\n"
         f"Error: <code>{error_message[:500]}</code>\n\n"
         f"Cek GitHub Actions untuk detail lengkap."
     )
@@ -325,7 +326,7 @@ def send_stockbit_token_alert(token_preview: str = "") -> bool:
         f"3. Klik saham apa saja, cari request ke <code>/broker/distribution</code>\n"
         f"4. Copy nilai <code>Authorization</code> header\n"
         f"5. Update <code>STOCKBIT_TOKEN</code> di <code>.env</code>\n\n"
-        f"Waktu: {datetime.now().strftime('%Y-%m-%d %H:%M WIB')}"
+        f"Waktu: {(datetime.now(timezone.utc) + timedelta(hours=7)).strftime('%Y-%m-%d %H:%M WIB')}"
     )
     return _send_message(msg)
 
@@ -339,6 +340,6 @@ def send_test_message() -> bool:
     msg = (
         f"✅ <b>WhaleDet IDX — Test Connection</b>\n\n"
         f"Bot berjalan normal.\n"
-        f"Waktu: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        f"Waktu: {(datetime.now(timezone.utc) + timedelta(hours=7)).strftime('%Y-%m-%d %H:%M:%S')}"
     )
     return _send_message(msg)
