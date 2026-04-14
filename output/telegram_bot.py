@@ -80,8 +80,20 @@ def _send_message(text: str, parse_mode: str = "HTML") -> bool:
         return False
 
 
+def _fmt_score_bar(score: float | None) -> str:
+    """Buat visual bar sederhana untuk score 0-100.
+
+    Contoh: score 80 → '████░░ 80'
+    """
+    if score is None:
+        return "N/A"
+    filled = round(score / 20)  # 0-5 blok
+    bar = "█" * filled + "░" * (5 - filled)
+    return f"{bar} {score:.0f}"
+
+
 def _format_signal_entry(rank: int, signal: dict) -> str:
-    """Format satu sinyal menjadi teks HTML untuk Telegram.
+    """Format satu sinyal menjadi teks HTML untuk Telegram dengan breakdown per faktor.
 
     Args:
         rank: Nomor urut (1-based)
@@ -93,36 +105,84 @@ def _format_signal_entry(rank: int, signal: dict) -> str:
     ticker = signal.get("ticker", "?")
     score = signal.get("composite_score", 0)
     signal_type = signal.get("signal_type", "MONITOR")
-    volume_zscore = signal.get("volume_zscore")
-    evidence = signal.get("evidence_json", {})
+    volume_score = signal.get("volume_score")
+    broker_score = signal.get("broker_score")
+    foreign_score = signal.get("foreign_score")
+    conflict = signal.get("conflict")
+    evidence = signal.get("evidence_json", {}) or {}
 
     emoji = SIGNAL_EMOJI.get(signal_type, "⚪")
     action = SIGNAL_ACTION.get(signal_type, "Monitor")
 
-    # Volume info
-    vol_evidence = evidence.get("volume", {}) if evidence else {}
-    vol_ratio = vol_evidence.get("ratio")
-    vol_ratio_str = f"{vol_ratio:.1f}x" if vol_ratio else "N/A"
+    # Volume detail
+    vol_ev = evidence.get("volume", {})
+    vol_ratio = vol_ev.get("ratio")
+    zscore = vol_ev.get("zscore")
+    vol_detail = ""
+    if vol_ratio:
+        vol_detail = f" ({vol_ratio:.1f}x, z={zscore:.1f})" if zscore else f" ({vol_ratio:.1f}x)"
 
-    zscore_str = f"{volume_zscore:.2f}" if volume_zscore is not None else "N/A"
-
-    # Price info
-    price_evidence = evidence.get("price", {}) if evidence else {}
-    price_change = price_evidence.get("change_1d")
+    # Price
+    price_ev = evidence.get("price", {})
+    price_change = price_ev.get("change_1d")
     price_str = ""
     if price_change is not None:
         sign = "+" if price_change >= 0 else ""
-        price_str = f" | Harga: {sign}{price_change * 100:.1f}%"
+        price_str = f"  Harga: {sign}{price_change * 100:.1f}%"
 
-    scenario = evidence.get("scenario", "") if evidence else ""
-    scenario_str = f" | {scenario}" if scenario and scenario != "NORMAL" else ""
+    # Broker detail
+    broker_ev = evidence.get("broker", {})
+    broker_detail = ""
+    if broker_score is not None and broker_ev:
+        asing_net = broker_ev.get("asing_net", 0)
+        institusi_net = broker_ev.get("institusi_net", 0)
+        sign_a = "+" if asing_net >= 0 else ""
+        sign_i = "+" if institusi_net >= 0 else ""
+        broker_detail = (
+            f" (A:{sign_a}{asing_net/1e6:.0f}M I:{sign_i}{institusi_net/1e6:.0f}M)"
+        )
 
-    lines = [
-        f"<b>{rank}. {ticker}</b> {emoji} Score: <b>{score:.0f}</b>",
-        f"   📊 Vol: {vol_ratio_str} baseline | Z-score: {zscore_str}{price_str}",
-    ]
-    if scenario_str:
-        lines.append(f"   📌 {scenario}")
+    # Foreign detail
+    foreign_ev = evidence.get("foreign", {})
+    foreign_detail = ""
+    if foreign_score is not None and foreign_ev:
+        f_net = foreign_ev.get("foreign_net", 0)
+        f_consec = foreign_ev.get("consecutive_buy", 0)
+        f_trend = foreign_ev.get("trend", "")
+        sign_f = "+" if f_net >= 0 else ""
+        consec_str = f" {f_consec}hr berturut" if f_consec >= 2 else ""
+        foreign_detail = f" ({sign_f}{f_net/1e6:.0f}M{consec_str})"
+
+    # Scenario
+    scenario = evidence.get("scenario", "")
+
+    # Build lines
+    header = f"<b>{rank}. {ticker}</b> {emoji}  Final: <b>{score:.0f}</b>"
+    if scenario and scenario != "NORMAL":
+        header += f"  [{scenario}]"
+
+    lines = [header]
+
+    # Breakdown faktor
+    lines.append(f"   📊 Volume : {_fmt_score_bar(volume_score)}{vol_detail}")
+
+    if broker_score is not None:
+        lines.append(f"   🏦 Broker : {_fmt_score_bar(broker_score)}{broker_detail}")
+    else:
+        lines.append(f"   🏦 Broker : —")
+
+    if foreign_score is not None:
+        lines.append(f"   🌏 Asing  : {_fmt_score_bar(foreign_score)}{foreign_detail}")
+    else:
+        lines.append(f"   🌏 Asing  : —")
+
+    if price_str:
+        lines.append(f"  {price_str}")
+
+    # Conflict warning
+    if conflict:
+        lines.append(f"   ⚠️ <i>Sinyal konflik — cek manual</i>")
+
     lines.append(f"   → {action}")
 
     return "\n".join(lines)

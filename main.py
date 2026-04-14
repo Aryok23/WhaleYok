@@ -27,12 +27,17 @@ from datetime import date, datetime, timedelta
 
 from config.settings import settings, configure_logging
 from data.scrapers.ohlcv import fetch_ohlcv_daily
+from data.scrapers.broksum import scrape_broksum_bulk, compute_broker_net_by_category
+from data.scrapers.foreign_flow import scrape_foreign_flow_bulk, compute_foreign_trend
 from engine.features import compute_features_for_ticker
 from engine.scorer import score_all_emiten
 from output.db_writer import (
     load_emiten_universe,
     load_price_history_bulk,
+    load_foreign_flow_history,
     write_price_data,
+    write_broker_summary,
+    write_foreign_flow,
     write_signals,
     mark_signals_sent,
 )
@@ -167,8 +172,39 @@ def run_eod_pipeline(target_date: date, dry_run: bool = False) -> dict:
     else:
         logger.info(f"  {len(history_df)} rows historis dimuat")
 
-    # ── Step 5: Compute features per emiten ───────────────────────────────────
-    logger.info("Step 5: Compute features per emiten...")
+    # ── Step 5: Scrape broker summary ─────────────────────────────────────────
+    logger.info("Step 5: Scrape broker summary dari IDX...")
+    broksum_df = scrape_broksum_bulk(tickers_today, target_date)
+    broker_rows_written = write_broker_summary(broksum_df, dry_run=dry_run)
+    logger.info(f"  {len(broksum_df)} broker rows diterima, {broker_rows_written} ditulis")
+
+    # Build broker_map: {ticker: broker_category_summary}
+    broker_map: dict[str, dict] = {}
+    if not broksum_df.empty:
+        for ticker in tickers_today:
+            ticker_brok = broksum_df[broksum_df["ticker"] == ticker]
+            if not ticker_brok.empty:
+                broker_map[ticker] = compute_broker_net_by_category(ticker_brok)
+
+    # ── Step 6: Scrape foreign flow ────────────────────────────────────────────
+    logger.info("Step 6: Scrape foreign flow dari IDX...")
+    foreign_df = scrape_foreign_flow_bulk(tickers_today, target_date)
+    foreign_rows_written = write_foreign_flow(foreign_df, dry_run=dry_run)
+    logger.info(f"  {len(foreign_df)} foreign rows diterima, {foreign_rows_written} ditulis")
+
+    # Build foreign_map: {ticker: foreign_trend_data}
+    foreign_map: dict[str, dict] = {}
+    if not foreign_df.empty:
+        for _, row in foreign_df.iterrows():
+            ticker = row["ticker"]
+            ff_hist = load_foreign_flow_history(ticker, days=20)
+            trend_data = compute_foreign_trend(ticker, ff_hist)
+            # _foreign_net = net hari ini (tidak tersimpan di DB, hanya untuk scoring)
+            trend_data["foreign_net"] = row.get("_foreign_net", 0.0)
+            foreign_map[ticker] = trend_data
+
+    # ── Step 7: Compute features per emiten ───────────────────────────────────
+    logger.info("Step 7: Compute features per emiten...")
     features_list: list[dict] = []
     errors_features = 0
 
@@ -176,12 +212,10 @@ def run_eod_pipeline(target_date: date, dry_run: bool = False) -> dict:
 
     for ticker in tickers_today:
         try:
-            # Ambil historis ticker ini dari Supabase
             ticker_hist = history_df[history_df["ticker"] == ticker].copy() if not history_df.empty else pd.DataFrame()
             ticker_today = today_df[today_df["ticker"] == ticker].copy()
 
             if not ticker_hist.empty:
-                # Gabungkan historis + hari ini, deduplikasi berdasarkan date
                 combined = pd.concat([ticker_hist, ticker_today], ignore_index=True)
                 combined = combined.drop_duplicates(subset=["date"]).sort_values("date").reset_index(drop=True)
             else:
@@ -205,23 +239,30 @@ def run_eod_pipeline(target_date: date, dry_run: bool = False) -> dict:
     if errors_features > 0:
         logger.warning(f"  {errors_features} emiten gagal")
 
-    # ── Step 6: Score semua emiten ────────────────────────────────────────────
-    logger.info("Step 6: Score semua emiten...")
-    all_signals = score_all_emiten(features_list)
-    logger.info(f"  {len(all_signals)} sinyal dihasilkan")
+    # ── Step 8: Score semua emiten ────────────────────────────────────────────
+    logger.info("Step 8: Score semua emiten...")
+    # Fase 2 jika ada data broker atau foreign, fallback ke fase 1
+    fase = 2 if (broker_map or foreign_map) else 1
+    all_signals = score_all_emiten(
+        features_list,
+        broker_map=broker_map if broker_map else None,
+        foreign_map=foreign_map if foreign_map else None,
+        fase=fase,
+    )
+    logger.info(f"  {len(all_signals)} sinyal dihasilkan (fase {fase})")
 
-    # ── Step 7: Filter sinyal signifikan ──────────────────────────────────────
-    logger.info(f"Step 7: Filter sinyal dengan score >= {settings.min_score_for_alert}...")
+    # ── Step 9: Filter sinyal signifikan ──────────────────────────────────────
+    logger.info(f"Step 9: Filter sinyal dengan score >= {settings.min_score_for_alert}...")
     alert_signals = [s for s in all_signals if s["composite_score"] >= settings.min_score_for_alert]
     logger.info(f"  {len(alert_signals)} sinyal memenuhi threshold")
 
     summary["signals_generated"] = len(all_signals)
 
-    # ── Step 8: Kirim top N ke Telegram ───────────────────────────────────────
+    # ── Step 10: Kirim top N ke Telegram ──────────────────────────────────────
     top_signals = alert_signals[: settings.top_n_signals]
     summary["signals_alerted"] = len(top_signals)
 
-    logger.info(f"Step 8: Kirim {len(top_signals)} top sinyal ke Telegram...")
+    logger.info(f"Step 10: Kirim {len(top_signals)} top sinyal ke Telegram...")
     telegram_ok = send_eod_alert(
         signals=top_signals,
         target_date=target_date,
@@ -231,8 +272,8 @@ def run_eod_pipeline(target_date: date, dry_run: bool = False) -> dict:
     if not telegram_ok:
         logger.warning("Satu atau lebih pesan Telegram gagal dikirim")
 
-    # ── Step 9: Simpan semua signals ke Supabase ──────────────────────────────
-    logger.info("Step 9: Simpan signals ke Supabase...")
+    # ── Step 11: Simpan semua signals ke Supabase ─────────────────────────────
+    logger.info("Step 11: Simpan signals ke Supabase...")
     # Untuk setiap sinyal, tambahkan tier dari universe
     ticker_to_tier = {}
     if not universe_df.empty:
@@ -255,7 +296,7 @@ def run_eod_pipeline(target_date: date, dry_run: bool = False) -> dict:
     signals_written = write_signals(signals_to_write, dry_run=dry_run)
     logger.info(f"  {signals_written} sinyal ditulis ke Supabase")
 
-    # ── Step 10: Ringkasan ────────────────────────────────────────────────────
+    # ── Step 12: Ringkasan ────────────────────────────────────────────────────
     logger.info("=== PIPELINE SELESAI ===")
     logger.info(f"  Tanggal       : {date_str}")
     logger.info(f"  Emiten scan   : {summary['emiten_scanned']}")

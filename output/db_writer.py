@@ -283,6 +283,152 @@ def load_emiten_universe(filters: dict | None = None) -> pd.DataFrame:
         return pd.DataFrame()
 
 
+def write_broker_summary(df: pd.DataFrame, dry_run: bool = False) -> int:
+    """Upsert broker summary harian ke tabel broker_summary.
+
+    Args:
+        df: DataFrame dengan kolom: date, ticker, broker_code, net_value,
+            net_volume, buy_value, sell_value, freq_buy, freq_sell, category
+        dry_run: Jika True, tidak melakukan write ke database
+
+    Returns:
+        Jumlah rows yang berhasil ditulis (0 jika dry_run)
+    """
+    if df.empty:
+        logger.warning("write_broker_summary: DataFrame kosong")
+        return 0
+
+    if dry_run:
+        logger.info(f"[DRY RUN] write_broker_summary: akan menulis {len(df)} rows")
+        return 0
+
+    client = _get_client()
+    records = _df_to_records(df)
+    total_written = 0
+
+    for i in range(0, len(records), BATCH_SIZE):
+        batch = records[i : i + BATCH_SIZE]
+        try:
+            client.table("broker_summary").upsert(
+                batch, on_conflict="date,ticker,broker_code"
+            ).execute()
+            total_written += len(batch)
+        except Exception as exc:
+            logger.error(f"write_broker_summary: gagal batch {i // BATCH_SIZE + 1}: {exc}")
+
+    logger.info(f"write_broker_summary: {total_written}/{len(df)} rows ditulis")
+    return total_written
+
+
+def write_foreign_flow(df: pd.DataFrame, dry_run: bool = False) -> int:
+    """Upsert foreign flow harian ke tabel foreign_flow.
+
+    Args:
+        df: DataFrame dengan kolom: date, ticker, foreign_buy, foreign_sell,
+            foreign_net, foreign_net_5d, foreign_net_20d
+        dry_run: Jika True, tidak melakukan write ke database
+
+    Returns:
+        Jumlah rows yang berhasil ditulis (0 jika dry_run)
+    """
+    if df.empty:
+        logger.warning("write_foreign_flow: DataFrame kosong")
+        return 0
+
+    if dry_run:
+        logger.info(f"[DRY RUN] write_foreign_flow: akan menulis {len(df)} rows")
+        return 0
+
+    client = _get_client()
+    # Hapus kolom internal (_foreign_net) sebelum insert ke DB
+    df_write = df.drop(columns=[c for c in df.columns if c.startswith("_")], errors="ignore")
+    records = _df_to_records(df_write)
+    total_written = 0
+
+    for i in range(0, len(records), BATCH_SIZE):
+        batch = records[i : i + BATCH_SIZE]
+        try:
+            client.table("foreign_flow").upsert(
+                batch, on_conflict="date,ticker"
+            ).execute()
+            total_written += len(batch)
+        except Exception as exc:
+            logger.error(f"write_foreign_flow: gagal batch {i // BATCH_SIZE + 1}: {exc}")
+
+    logger.info(f"write_foreign_flow: {total_written}/{len(df)} rows ditulis")
+    return total_written
+
+
+def load_broker_summary(ticker: str, days: int = 5) -> pd.DataFrame:
+    """Load historis broker_summary dari Supabase untuk satu ticker.
+
+    Args:
+        ticker: Kode saham IDX
+        days: Jumlah hari historis
+
+    Returns:
+        DataFrame broker_summary, kosong jika tidak ada.
+    """
+    try:
+        from datetime import timedelta
+        client = _get_client()
+        cutoff = (date.today() - timedelta(days=days + 5)).isoformat()
+
+        response = (
+            client.table("broker_summary")
+            .select("*")
+            .eq("ticker", ticker)
+            .gte("date", cutoff)
+            .order("date", desc=False)
+            .execute()
+        )
+        if not response.data:
+            return pd.DataFrame()
+
+        df = pd.DataFrame(response.data)
+        df["date"] = pd.to_datetime(df["date"]).dt.date
+        return df
+
+    except Exception as exc:
+        logger.error(f"load_broker_summary: gagal load {ticker}: {exc}")
+        return pd.DataFrame()
+
+
+def load_foreign_flow_history(ticker: str, days: int = 20) -> pd.DataFrame:
+    """Load historis foreign_flow dari Supabase untuk satu ticker.
+
+    Args:
+        ticker: Kode saham IDX
+        days: Jumlah hari historis
+
+    Returns:
+        DataFrame foreign_flow, kosong jika tidak ada.
+    """
+    try:
+        from datetime import timedelta
+        client = _get_client()
+        cutoff = (date.today() - timedelta(days=days + 10)).isoformat()
+
+        response = (
+            client.table("foreign_flow")
+            .select("date, ticker, foreign_buy, foreign_sell, foreign_net")
+            .eq("ticker", ticker)
+            .gte("date", cutoff)
+            .order("date", desc=False)
+            .execute()
+        )
+        if not response.data:
+            return pd.DataFrame()
+
+        df = pd.DataFrame(response.data)
+        df["date"] = pd.to_datetime(df["date"]).dt.date
+        return df
+
+    except Exception as exc:
+        logger.error(f"load_foreign_flow_history: gagal load {ticker}: {exc}")
+        return pd.DataFrame()
+
+
 def mark_signals_sent(signal_ids: list[int], dry_run: bool = False) -> None:
     """Tandai sinyal sudah dikirim ke Telegram.
 

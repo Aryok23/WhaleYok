@@ -2,9 +2,9 @@ name: WhaleDet Daily Scan
 
 on:
   schedule:
-    # 09:30 UTC = 16:30 WIB (UTC+7)
-    # Senin-Jumat saja
-    - cron: '30 9 * * 1-5'
+    # 12:30 UTC = 19:30 WIB (UTC+7)
+    # Senin-Jumat saja — broksum IDX biasanya tersedia ~17:00-18:00 WIB
+    - cron: '30 12 * * 1-5'
   workflow_dispatch:  # bisa trigger manual dari GitHub UI
 
 jobs:
