@@ -34,6 +34,7 @@ UNIVERSE_DIR = os.path.join(BASE_DIR, "config", "universe")
 UNIVERSE_FILES = {
     "idx80": os.path.join(UNIVERSE_DIR, "idx80.csv"),
     "idx300": os.path.join(UNIVERSE_DIR, "idx300.csv"),
+    "gorengan": os.path.join(UNIVERSE_DIR, "gorengan_watchlist.csv"),
 }
 
 
@@ -69,6 +70,32 @@ def load_universe_csv() -> pd.DataFrame:
             }
     else:
         logger.warning(f"File IDX300 tidak ditemukan: {idx300_path}")
+
+    # Load gorengan watchlist
+    gorengan_path = UNIVERSE_FILES["gorengan"]
+    if os.path.exists(gorengan_path):
+        df_gorengan = pd.read_csv(gorengan_path)
+        logger.info(f"  Gorengan: {len(df_gorengan)} emiten dimuat dari {gorengan_path}")
+        for _, row in df_gorengan.iterrows():
+            ticker = str(row["ticker"]).strip().upper()
+            if ticker not in all_tickers:
+                all_tickers[ticker] = {
+                    "ticker": ticker,
+                    "name": str(row.get("name", "")).strip(),
+                    "sector": str(row.get("sector", "")).strip(),
+                    "sub_sector": None,
+                    "papan": "Pengembangan",
+                    "market_cap_tier": "small",
+                    "is_lq45": False,
+                    "is_idx80": False,
+                    "is_idx300": False,
+                    "konglo_group": None,
+                    "listing_date": None,
+                    "is_ipo_new": False,
+                    "last_updated": date.today().isoformat(),
+                }
+    else:
+        logger.warning(f"File gorengan tidak ditemukan: {gorengan_path}")
 
     # Load IDX80, update flag
     idx80_path = UNIVERSE_FILES["idx80"]
