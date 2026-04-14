@@ -128,10 +128,7 @@ def scrape_foreign_flow(
                 "foreign_buy": int(foreign_buy),
                 "foreign_sell": int(foreign_sell),
                 # foreign_net adalah GENERATED column di DB — tidak diinsert
-                # volume tidak tersedia dari endpoint ini — set 0
-                "foreign_buy_volume": 0,
-                "foreign_sell_volume": 0,
-                # simpan net untuk scoring (tidak ditulis ke DB)
+                # simpan net untuk scoring (tidak ditulis ke DB, prefix _)
                 "_foreign_net": net_foreign,
             }
             logger.debug(

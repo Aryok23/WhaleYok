@@ -54,13 +54,20 @@ def compute_volume_zscore(df: pd.DataFrame, window: int = 20) -> pd.Series:
 def compute_price_change(df: pd.DataFrame, periods: list[int] | None = None) -> pd.DataFrame:
     """Hitung perubahan harga untuk beberapa periode.
 
+    Validasi date gap: jika jarak antar baris > batas kalender wajar,
+    price_change di-set NaN agar tidak membandingkan harga yang berselisih
+    berminggu-minggu seolah perubahan 1 hari.
+
+    Batas: p=1 → max 7 hari, p=3 → max 14 hari, p=5 → max 21 hari.
+    (Buffer untuk libur panjang/weekend panjang.)
+
     Args:
-        df: DataFrame dengan kolom 'close', diurutkan ascending by date.
+        df: DataFrame dengan kolom 'close' dan 'date', sorted ascending by date.
         periods: List jumlah hari lookback. Default [1, 3, 5].
 
     Returns:
-        DataFrame dengan kolom: price_change_1d, price_change_3d, price_change_5d (dll)
-        Nilai dalam fraksi desimal (0.05 = +5%).
+        DataFrame dengan kolom price_change_1d, price_change_3d, price_change_5d.
+        Nilai fraksi desimal (0.05 = +5%). NaN jika data gap terlalu besar.
     """
     if periods is None:
         periods = [1, 3, 5]
@@ -72,9 +79,23 @@ def compute_price_change(df: pd.DataFrame, periods: list[int] | None = None) -> 
     close = df["close"].astype(float)
     result = pd.DataFrame(index=df.index)
 
+    has_dates = "date" in df.columns
+    if has_dates:
+        dates = pd.to_datetime(df["date"]).reset_index(drop=True)
+
     for p in periods:
         col_name = f"price_change_{p}d"
-        result[col_name] = close.pct_change(periods=p)
+        changes = close.pct_change(periods=p)
+
+        # Invalidasi baris yang date gap-nya terlalu besar
+        if has_dates:
+            max_gap = p * 7  # 7 hari kalender per periode trading
+            for i in range(p, len(df)):
+                gap_days = (dates.iloc[i] - dates.iloc[i - p]).days
+                if gap_days > max_gap:
+                    changes.iloc[i] = np.nan
+
+        result[col_name] = changes
 
     return result
 
