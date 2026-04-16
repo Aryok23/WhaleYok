@@ -216,6 +216,10 @@ def load_price_history(ticker: str, days: int = 30) -> pd.DataFrame:
 def load_price_history_bulk(tickers: list[str], days: int = 30) -> pd.DataFrame:
     """Load historis price_data dari Supabase untuk banyak ticker sekaligus.
 
+    Menggunakan pagination (.range()) untuk melewati server-side row cap
+    Supabase (default 1000 rows/request), sehingga semua data historis
+    terambil tanpa terpotong berapapun jumlah ticker atau hari ke depannya.
+
     Args:
         tickers: List kode saham IDX
         days: Jumlah hari historis yang diambil (per ticker)
@@ -228,22 +232,37 @@ def load_price_history_bulk(tickers: list[str], days: int = 30) -> pd.DataFrame:
 
     try:
         client = _get_client()
-        # Ambil N hari terakhir untuk semua ticker yang diminta
         from datetime import date, timedelta
         cutoff = (date.today() - timedelta(days=days + 10)).isoformat()  # +10 buffer weekend/holiday
 
-        response = (
-            client.table("price_data")
-            .select("date, ticker, open, high, low, close, volume")
-            .in_("ticker", tickers)
-            .gte("date", cutoff)
-            .order("date", desc=False)
-            .execute()
-        )
-        if not response.data:
+        PAGE_SIZE = 1000
+        all_records: list[dict] = []
+        offset = 0
+
+        while True:
+            response = (
+                client.table("price_data")
+                .select("date, ticker, open, high, low, close, volume")
+                .in_("ticker", tickers)
+                .gte("date", cutoff)
+                .order("date", desc=False)
+                .range(offset, offset + PAGE_SIZE - 1)
+                .execute()
+            )
+            page = response.data or []
+            all_records.extend(page)
+
+            if len(page) < PAGE_SIZE:
+                # Halaman terakhir — tidak ada lagi data
+                break
+            offset += PAGE_SIZE
+
+        if not all_records:
             return pd.DataFrame()
 
-        df = pd.DataFrame(response.data)
+        logger.debug(f"load_price_history_bulk: {len(all_records)} rows dimuat dalam {offset // PAGE_SIZE + 1} halaman")
+
+        df = pd.DataFrame(all_records)
         df["date"] = pd.to_datetime(df["date"]).dt.date
         return df
 
